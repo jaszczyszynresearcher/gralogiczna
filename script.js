@@ -1,3 +1,10 @@
+// ===== Konfiguracja „realnych” wyników + komunikacja =====
+const TEAM_SIZE = 2;                  // gracz + 1 teammate
+const AVERAGE_STEP = 5;               // średnia wyświetlana co 5 pkt
+const DIFF_CHOICES = [5, 10];         // przewaga / strata: 5 lub 10 pkt
+const QUALTRICS_ORIGIN = "https://psychodpt.fra1.qualtrics.com";
+
+// ===== Pytania =====
 const questions = [
   { text: 'Ile wynosi wynik działania: 3 + 4 × 5 − 1 ?', answers: ['34','28','22','19'], correct: 2, reason: 'Mnożenie wykonujemy przed dodawaniem i odejmowaniem.' },
   { text: 'Jaka liczba powinna być następna w serii: 3, 7, 10, 14, 17, ... ?', answers: ['20','21','22','24'], correct: 1, reason: 'Reguła to naprzemienne dodawanie +4 i +3.' },
@@ -6,26 +13,42 @@ const questions = [
   { text: 'Rower jest szybszy niż hulajnoga, ale wolniejszy niż motocykl. Samochód jest szybszy niż motocykl. Co jest najwolniejsze?', answers: ['Rower','Motocykl','Samochód','Hulajnoga'], correct: 3, reason: 'Kolejność prędkości: Samochód > Motocykl > Rower > Hulajnoga.' }
 ];
 
+// ===== Stan gry =====
 let currentQuestion = 0;
-let score = 0;
+let score = 0;                       // 0–50, kroki po 10
 let timer;
 let timeLeft = 10;
 let feedbackCondition;
+let speedBonusAccum = 0;             // suma sekund za trafne odpowiedzi
 
-// docelowa domena Qualtrics do postMessage
-const QUALTRICS_ORIGIN = "https://psychodpt.fra1.qualtrics.com";
-
+// ===== Pomocnicze =====
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  // prosta animacja fade-in (bez ciężkich klas)
+  document.querySelectorAll('.screen').forEach(s => {
+    s.style.display = 'none';
+    s.style.opacity = 0;
+  });
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  el.style.opacity = 0;
+  setTimeout(() => { el.style.opacity = 1; }, 20);
+}
+function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function quantizeToStep(value, step) {
+  const q = Math.round(value / step) * step;
+  return Math.min(50, Math.max(0, q));
 }
 
+// ===== Zdarzenia UI =====
 document.getElementById('start-btn').addEventListener('click', startGame);
 document.getElementById('team-results-btn').addEventListener('click', calculateResults);
 
+// ===== Logika gry =====
 function startGame() {
   currentQuestion = 0;
   score = 0;
+  speedBonusAccum = 0;
   showQuestion();
 }
 
@@ -64,17 +87,39 @@ function selectAnswer(index) {
   clearInterval(timer);
   const q = questions[currentQuestion];
   const correct = q.correct === index;
-  if (correct) score += 10;
+
+  if (correct) {
+    score += 10;                              // baza: 10 pkt
+    speedBonusAccum += Math.max(0, timeLeft); // bonus za szybkość
+  }
 
   document.getElementById('feedback-text').textContent = correct ? 'Poprawnie! +10 pkt' : 'Błędnie! 0 pkt';
   document.getElementById('correct-answer').textContent = `Prawidłowa odpowiedź: ${q.answers[q.correct]}. ${q.reason}`;
 
+  // --- 5-sekundowe okno czytania + odliczanie "Kolejne zadanie za ... s" ---
   showScreen('screen-feedback');
-  setTimeout(() => {
-    currentQuestion++;
-    if (currentQuestion < questions.length) showQuestion();
-    else endGame();
-  }, 2000);
+
+  // usuń poprzedni licznik jeśli był
+  const old = document.getElementById('next-countdown');
+  if (old) old.remove();
+
+  let countdown = 5;
+  const countdownText = document.createElement('p');
+  countdownText.id = 'next-countdown';
+  document.getElementById('screen-feedback').appendChild(countdownText);
+
+  function updateCountdown() {
+    countdownText.textContent = `Kolejne zadanie za ${countdown} s...`;
+    if (countdown > 0) {
+      countdown--;
+      setTimeout(updateCountdown, 1000);
+    } else {
+      currentQuestion++;
+      if (currentQuestion < questions.length) showQuestion();
+      else endGame();
+    }
+  }
+  updateCountdown();
 }
 
 function endGame() {
@@ -85,20 +130,34 @@ function endGame() {
 function calculateResults() {
   showScreen('screen-calculating');
 
-  // losowanie feedbacku po stronie gry
+  // 1) Losujemy warunek
   feedbackCondition = Math.random() < 0.5 ? 'Wygrana' : 'Przegrana';
 
-  const player = score;
-  const t1 = randomInt(20, 40);
-  const t2 = randomInt(20, 40);
-  const avgIngroup = (player + t1 + t2) / 3;
+  // 2) Bonus za szybkość (0–5)
+  let speedBonus = Math.round(speedBonusAccum / 10);
+  if (speedBonus > 5) speedBonus = 5;
 
-  const diff = randomFloat(2.0, 3.0);
-  let avgOutgroup = feedbackCondition === 'Wygrana' ? avgIngroup - diff : avgIngroup + diff;
-  if (avgOutgroup < 0) avgOutgroup = 0;
+  // 3) Wkład gracza do średniej zespołu = min(50, score + bonus)
+  const playerContribution = Math.min(50, score + speedBonus);
 
-  const ing = avgIngroup.toFixed(1);
-  const outg = avgOutgroup.toFixed(1);
+  // 4) Teammate: wielokrotność 10 (0..50)
+  const teammateScore = randomInt(0, 5) * 10;
+
+  // 5) Średnia zespołu i kwantyzacja do 5
+  let avgIngroupRaw = (playerContribution + teammateScore) / TEAM_SIZE;
+  let avgIngroup = quantizeToStep(avgIngroupRaw, AVERAGE_STEP);
+
+  // 6) Średnia przeciwnika – różnica 5 lub 10
+  const targetDiff = pick(DIFF_CHOICES);
+  let avgOutgroup = feedbackCondition === 'Wygrana' ? avgIngroup - targetDiff : avgIngroup + targetDiff;
+  avgOutgroup = quantizeToStep(avgOutgroup, AVERAGE_STEP);
+
+  if (avgOutgroup === avgIngroup) {
+    avgOutgroup = quantizeToStep(
+      feedbackCondition === 'Wygrana' ? avgIngroup - AVERAGE_STEP : avgIngroup + AVERAGE_STEP,
+      AVERAGE_STEP
+    );
+  }
 
   setTimeout(() => {
     document.getElementById('calc-text').textContent = 'Obliczam średnią punktów Zespołu Przeciwnego...';
@@ -110,14 +169,25 @@ function calculateResults() {
       ? 'Gratulacje! Wasz zespół wygrał!'
       : 'Niestety, tym razem Zespół Przeciwny był lepszy.';
     document.getElementById('team-feedback').textContent = teamFeedback;
-    document.getElementById('team-scores').textContent = `Twój zespół: ${ing} pkt | Zespół przeciwny: ${outg} pkt`;
+    document.getElementById('team-scores').textContent =
+      `Twój zespół: ${avgIngroup} pkt (uwzględniono bonus za szybkość) | Zespół przeciwny: ${avgOutgroup} pkt`;
 
-    // wysyłka wyłącznie do Qualtrics (bez '*')
-    window.parent.postMessage({ feedback: feedbackCondition }, QUALTRICS_ORIGIN);
+    // WYŁĄCZNIE informacja o wygranej/przegranej do Qualtrics
+    window.parent.postMessage(
+      { type: "LOGIC_FEEDBACK", value: feedbackCondition },
+      QUALTRICS_ORIGIN
+    );
 
-    setTimeout(() => { document.body.innerHTML = '<h2>Dziękujemy za udział!</h2>'; }, 5000);
+    // Estetyczny, wyśrodkowany komunikat końcowy
+    setTimeout(() => {
+      document.body.innerHTML = "";
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "min-height:60vh; display:flex; align-items:flex-start; justify-content:center;";
+      const msg = document.createElement("div");
+      msg.style.cssText = "max-width:640px; text-align:center; font-size:1.25rem; line-height:1.5; color:#333; background:#fff; border-radius:16px; padding:24px; margin-top:24px; box-shadow:0 4px 20px rgba(0,0,0,.06);";
+      msg.innerHTML = "<strong>Dziękujemy za udział!</strong><br/>Aby przejść dalej kliknij strzałkę poniżej";
+      wrap.appendChild(msg);
+      document.body.appendChild(wrap);
+    }, 500);
   }, 6000);
 }
-
-function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-function randomFloat(min, max) { return Math.random() * (max - min) + min; }
