@@ -2,48 +2,56 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pojedynek Logiczny</title>
+
+  <!-- (opcjonalnie) Inter – jeśli używasz w CSS -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="game-container">
-    <!-- Ekran 1: tylko przycisk START -->
+    <!-- Ekran 1: Start -->
     <section id="screen-intro" class="screen active">
       <button id="start-btn">Start gry</button>
     </section>
 
     <!-- Ekran 2: Pytanie -->
-    <section id="screen-question" class="screen">
-      <div class="hud">
+    <section id="screen-question" class="screen" aria-live="polite">
+      <div class="header">
         <div id="timer">Czas: <span id="time-left">10</span>s</div>
-        <div id="score">Punkty: <span id="score-value">0</span></div>
+        <div class="score">Punkty: <span id="score-value">0</span></div>
       </div>
-      <h2 id="question-text"></h2>
-      <div id="answers"></div>
+
+      <h2 id="question-text" class="fade-in"></h2>
+
+      <div id="answers" class="answers">
+        <!-- przyciski odpowiedzi są wstawiane dynamicznie przez script.js -->
+      </div>
     </section>
 
-    <!-- Ekran 3: Feedback po pytaniu (z odliczaniem do kolejnego zadania) -->
-    <section id="screen-feedback" class="screen">
-      <h2 id="feedback-text"></h2>
+    <!-- Ekran 3: Feedback po pytaniu -->
+    <section id="screen-feedback" class="screen" aria-live="polite" role="status">
+      <p id="feedback-text" class="feedback"></p>
       <p id="correct-answer"></p>
-      <!-- JS doda tu <p id="next-countdown">Kolejne zadanie za 5 s...</p> -->
+      <p id="next-countdown"></p>
     </section>
 
     <!-- Ekran 4: Wynik indywidualny -->
     <section id="screen-result" class="screen">
-      <h2>Koniec czasu!</h2>
-      <p>Twój indywidualny wynik: <span id="final-score"></span> pkt (na 50 możliwych).</p>
-      <p>Za chwilę zobaczysz wyniki zespołowe.</p>
-      <button id="team-results-btn">Zobacz wyniki zespołowe</button>
+      <h2>Twój wynik</h2>
+      <p id="final-score">0</p>
+      <button id="team-results-btn">Zobacz wynik zespołów</button>
     </section>
 
-    <!-- Ekran 5: Obliczanie -->
-    <section id="screen-calculating" class="screen">
+    <!-- Ekran 5: „Obliczanie” -->
+    <section id="screen-calculating" class="screen" aria-live="polite">
       <p id="calc-text">Obliczam średnią punktów Twojego Zespołu...</p>
     </section>
 
-    <!-- Ekran 6: Wynik rywalizacji (bez limitu czasu) -->
+    <!-- Ekran 6: Wynik rywalizacji zespołów -->
     <section id="screen-team" class="screen">
       <h2 id="team-feedback"></h2>
       <p id="team-scores"></p>
@@ -51,6 +59,39 @@
     </section>
   </div>
 
+  <!-- Logika gry -->
   <script src="script.js"></script>
+
+  <!-- Auto-dopasowanie wysokości iframa w Qualtrics (rodzic-<iframe>) -->
+  <script>
+  (function () {
+    // Jeśli osadzane w wielu instancjach Qualtrics, możesz zostawić "*".
+    // Jeśli chcesz zawęzić: np. "https://psychodpt.fra1.qualtrics.com"
+    const PARENT_ORIGIN = "*";
+
+    function sendHeight() {
+      var h = Math.ceil(document.documentElement.scrollHeight);
+      try { window.parent && window.parent.postMessage({ type: "IFRAME_RESIZE", height: h }, PARENT_ORIGIN); } catch (e) {}
+    }
+
+    // Aktualizuj wysokość: po załadowaniu, przy zmianach layoutu i resize
+    try {
+      var ro = new ResizeObserver(sendHeight);
+      ro.observe(document.documentElement);
+    } catch (e) {
+      setInterval(sendHeight, 500); // fallback
+    }
+    window.addEventListener("load", sendHeight);
+    window.addEventListener("resize", sendHeight);
+
+    // Odbierz „PING_HEIGHT” z rodzica (Qualtrics) i odeślij aktualny pomiar
+    window.addEventListener("message", function (e) {
+      if (e && e.data && e.data.type === "PING_HEIGHT") sendHeight();
+    });
+
+    // Udostępnij funkcję – możesz wywołać w script.js po showScreen(...)
+    window.sendGameHeightToParent = sendHeight;
+  })();
+  </script>
 </body>
 </html>
