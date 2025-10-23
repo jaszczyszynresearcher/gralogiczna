@@ -1,53 +1,74 @@
+/* Ogólne – bez pionowego centrowania; moduł blisko góry */
 body {
   font-family: 'Inter', 'Open Sans', sans-serif;
   background-color: #f7f9fb;
   color: #333;
   margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding-top: 8px;        /* mały odstęp u góry */
 }
+
 #game-container {
+  width: 100%;
   max-width: 420px;
-  background: white;
+  background: #fff;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  padding: 20px;
+  margin: 8px auto 24px;   /* blisko góry */
   text-align: center;
 }
+
 button {
   background-color: #007ac1;
-  color: white;
+  color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px 20px;
   font-size: 16px;
   cursor: pointer;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 button:hover { background-color: #005f90; }
+
 .screen { display: none; }
 .screen.active { display: block; }
+
+.hud {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Mniejsza czcionka pytania (równanie itp.) */
+#question-text {
+  font-size: 1.35rem;           /* mniejsze niż wcześniej */
+  line-height: 1.3;
+  margin: 12px 0 6px;
+}
+
 #answers {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 10px;
 }
+
 .answer-btn {
   background: #e9f3fa;
   color: #333;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 12px;
   border: 1px solid #cde3f1;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.2s, transform 0.04s;
 }
 .answer-btn:hover { background: #d2ecfc; }
-#timer, #score { font-weight: 600; margin-bottom: 8px; }
+.answer-btn:active { transform: scale(0.995); }
+
 @media (max-width: 480px) {
-  #game-container { width: 90%; padding: 16px; }
-  h1, h2 { font-size: 1.2em; }
-  button { font-size: 14px; padding: 10px 16px; }
+  #game-container { padding: 16px; margin-top: 6px; }
+  #question-text { font-size: 1.12rem; }   /* jeszcze mniejsze na mobile */
+  button { font-size: 15px; padding: 10px 16px; }
 }
