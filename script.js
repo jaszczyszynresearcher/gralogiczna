@@ -15,15 +15,14 @@ const questions = [
 
 // ===== Stan gry =====
 let currentQuestion = 0;
-let score = 0;                       // 0–50, kroki po 10
+let score = 0;                       
 let timer;
 let timeLeft = 10;
 let feedbackCondition;
-let speedBonusAccum = 0;             // suma sekund za trafne odpowiedzi
+let speedBonusAccum = 0;
 
 // ===== Pomocnicze =====
 function showScreen(id) {
-  // prosta animacja fade-in
   document.querySelectorAll('.screen').forEach(s => {
     s.style.display = 'none';
     s.style.opacity = 0;
@@ -89,8 +88,8 @@ function selectAnswer(index) {
   const correct = q.correct === index;
 
   if (correct) {
-    score += 10;                              // baza: 10 pkt
-    speedBonusAccum += Math.max(0, timeLeft); // bonus za szybkość
+    score += 10;
+    speedBonusAccum += Math.max(0, timeLeft);
   }
 
   document.getElementById('feedback-text').textContent = correct ? 'Poprawnie! +10 pkt' : 'Błędnie! 0 pkt';
@@ -98,8 +97,6 @@ function selectAnswer(index) {
 
   // --- 5-sekundowe okno czytania + odliczanie ---
   showScreen('screen-feedback');
-
-  // usuń ewentualny licznik
   const old = document.getElementById('next-countdown');
   if (old) old.remove();
 
@@ -130,24 +127,23 @@ function endGame() {
 function calculateResults() {
   showScreen('screen-calculating');
 
-  // 1) Losujemy warunek
+  // 1) Losujemy warunek (50/50)
   feedbackCondition = Math.random() < 0.5 ? 'Wygrana' : 'Przegrana';
 
   // 2) Bonus za szybkość (0–5)
   let speedBonus = Math.round(speedBonusAccum / 10);
   if (speedBonus > 5) speedBonus = 5;
 
-  // 3) Wkład gracza do średniej zespołu
+  // 3) Wynik gracza (z bonusem)
   const playerContribution = Math.min(50, score + speedBonus);
 
-  // 4) Teammate: wielokrotność 10 (0..50)
+  // 4) Wynik teammate’a (co 10)
   const teammateScore = randomInt(0, 5) * 10;
 
-  // 5) Średnia zespołu i kwantyzacja do 5
+  // 5) Średnia zespołu i przeciwnika (realna, kwantowana)
   const avgIngroupRaw = (playerContribution + teammateScore) / TEAM_SIZE;
   const avgIngroup = quantizeToStep(avgIngroupRaw, AVERAGE_STEP);
 
-  // 6) Średnia przeciwnika – różnica 5 lub 10
   const targetDiff = pick(DIFF_CHOICES);
   let avgOutgroup = feedbackCondition === 'Wygrana' ? avgIngroup - targetDiff : avgIngroup + targetDiff;
   avgOutgroup = quantizeToStep(avgOutgroup, AVERAGE_STEP);
@@ -158,7 +154,7 @@ function calculateResults() {
     );
   }
 
-  // 7) Dwuetapowe liczenie jak wcześniej (ok. 6 s), a potem ekran wyników BEZ LIMITU
+  // 6) Etap liczenia (6 s), potem ekran końcowy bez limitu
   setTimeout(() => {
     document.getElementById('calc-text').textContent = 'Obliczam średnią punktów Zespołu Przeciwnego...';
   }, 3000);
@@ -170,14 +166,15 @@ function calculateResults() {
         ? 'Gratulacje! Wasz zespół wygrał!'
         : 'Niestety, tym razem Zespół Przeciwny był lepszy.';
     document.getElementById('team-feedback').textContent = teamFeedback;
-    document.getElementById('team-scores').textContent =
-      `Twój zespół: ${avgIngroup} pkt (uwzględniono bonus za szybkość) | Zespół przeciwny: ${avgOutgroup} pkt`;
 
-    // Wysyłamy INFORMACJĘ do Qualtrics OD RAZU, ale ekranu nie zamykamy i nie ograniczamy czasowo
+    // ✅ Zmieniony tekst — bez bonusu
+    document.getElementById('team-scores').textContent =
+      `Twój zespół: ${avgIngroup} pkt | Zespół przeciwny: ${avgOutgroup} pkt`;
+
+    // Wysyłamy do Qualtrics tylko wynik (bez punktów)
     window.parent.postMessage(
       { type: "LOGIC_FEEDBACK", value: feedbackCondition },
       QUALTRICS_ORIGIN
     );
-    // Użytkownik ręcznie klika strzałkę dalej w Qualtrics (komunikat pod spodem)
   }, 6000);
 }
