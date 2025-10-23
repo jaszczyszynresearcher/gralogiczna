@@ -8,35 +8,47 @@
 </head>
 <body>
   <div id="game-container">
+    <!-- Ekran 1: tylko przycisk START -->
     <section id="screen-intro" class="screen active">
-      <h1>Pojedynek Logiczny</h1>
-      <p>Za chwilę weźmiesz udział w krótkim teście logicznym. Odpowiadaj jak najszybciej i jak najtrafniej na 5 pytań. Masz na to łącznie 60 sekund. Twój wynik pomoże ustalić średni wynik Twojego Zespołu w rywalizacji z Zespołem Przeciwnym. Powodzenia!</p>
       <button id="start-btn">Start gry</button>
     </section>
+
+    <!-- Ekran 2: Pytanie -->
     <section id="screen-question" class="screen">
-      <div id="timer">Czas: <span id="time-left">10</span>s</div>
-      <div id="score">Punkty: <span id="score-value">0</span></div>
+      <div class="hud">
+        <div id="timer">Czas: <span id="time-left">10</span>s</div>
+        <div id="score">Punkty: <span id="score-value">0</span></div>
+      </div>
       <h2 id="question-text"></h2>
       <div id="answers"></div>
     </section>
+
+    <!-- Ekran 3: Feedback -->
     <section id="screen-feedback" class="screen">
       <h2 id="feedback-text"></h2>
       <p id="correct-answer"></p>
     </section>
+
+    <!-- Ekran 4: Wynik indywidualny -->
     <section id="screen-result" class="screen">
       <h2>Koniec czasu!</h2>
       <p>Twój indywidualny wynik: <span id="final-score"></span> pkt (na 50 możliwych).</p>
       <p>Za chwilę zobaczysz wyniki zespołowe.</p>
       <button id="team-results-btn">Zobacz wyniki zespołowe</button>
     </section>
+
+    <!-- Ekran 5: Obliczanie -->
     <section id="screen-calculating" class="screen">
       <p id="calc-text">Obliczam średnią punktów Twojego Zespołu...</p>
     </section>
+
+    <!-- Ekran 6: Wynik rywalizacji -->
     <section id="screen-team" class="screen">
       <h2 id="team-feedback"></h2>
       <p id="team-scores"></p>
     </section>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
