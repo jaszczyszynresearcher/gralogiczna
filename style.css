@@ -87,3 +87,14 @@ button:hover { background-color: #005f90; }
   #question-text { font-size: 0.96rem; }
   button { font-size: 15px; padding: 10px 16px; }
 }
+@media (max-width: 480px) {
+  .main-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 8px; /* lekki margines, by nie kleiło się do krawędzi */
+    box-sizing: border-box;
+  }
+  section.screen {
+    border-radius: 0;
+  }
+}
