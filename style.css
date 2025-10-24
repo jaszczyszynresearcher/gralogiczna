@@ -98,3 +98,18 @@ button:hover { background-color: #005f90; }
     border-radius: 0;
   }
 }
+/* ===== [PATCH] MOBILE FULL-WIDTH dla Qualtrics (gra w iframe) ===== */
+@media (max-width: 480px) {
+  /* sprytnie obejmujemy najczęstsze nazwy głównych wrapperów */
+  .main-container, .app, #app, .container, .game-root, body > main {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 8px;           /* lekki margines od krawędzi ekranu */
+    box-sizing: border-box;
+  }
+
+  /* opcjonalnie „odklejamy” kartę od krawędzi wizualnie */
+  section.screen {
+    border-radius: 0;
+  }
+}
