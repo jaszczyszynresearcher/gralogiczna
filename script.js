@@ -15,7 +15,7 @@ const questions = [
 
 // ===== Stan gry =====
 let currentQuestion = 0;
-let score = 0;                       
+let score = 0;
 let timer;
 let timeLeft = 10;
 let feedbackCondition;
@@ -31,6 +31,9 @@ function showScreen(id) {
   el.style.display = 'block';
   el.style.opacity = 0;
   setTimeout(() => { el.style.opacity = 1; }, 20);
+
+  // 🔔 po każdej zmianie ekranu wyślij wysokość do rodzica (Qualtrics)
+  __postHeight();
 }
 function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -80,6 +83,8 @@ function showQuestion() {
       selectAnswer(null);
     }
   }, 1000);
+
+  __postHeight(); // pytanie wyrenderowane → zaktualizuj wysokość
 }
 
 function selectAnswer(index) {
@@ -107,6 +112,7 @@ function selectAnswer(index) {
 
   function updateCountdown() {
     countdownText.textContent = `Kolejne zadanie za ${countdown} s...`;
+    __postHeight(); // wysokość feedbacku może się zmieniać (licznik)
     if (countdown > 0) {
       countdown--;
       setTimeout(updateCountdown, 1000);
@@ -122,10 +128,12 @@ function selectAnswer(index) {
 function endGame() {
   showScreen('screen-result');
   document.getElementById('final-score').textContent = score;
+  __postHeight();
 }
 
 function calculateResults() {
   showScreen('screen-calculating');
+  __postHeight();
 
   // 1) Losujemy warunek (50/50)
   feedbackCondition = Math.random() < 0.5 ? 'Wygrana' : 'Przegrana';
@@ -157,6 +165,7 @@ function calculateResults() {
   // 6) Etap liczenia (6 s), potem ekran końcowy bez limitu
   setTimeout(() => {
     document.getElementById('calc-text').textContent = 'Obliczam średnią punktów Zespołu Przeciwnego...';
+    __postHeight();
   }, 3000);
 
   setTimeout(() => {
@@ -167,22 +176,23 @@ function calculateResults() {
         : 'Niestety, tym razem Zespół Przeciwny był lepszy.';
     document.getElementById('team-feedback').textContent = teamFeedback;
 
-    // ✅ Zmieniony tekst — bez bonusu
     document.getElementById('team-scores').textContent =
       `Twój zespół: ${avgIngroup} pkt | Zespół przeciwny: ${avgOutgroup} pkt`;
 
-    // Wysyłamy do Qualtrics tylko wynik (bez punktów)
+    // Wysyłamy do Qualtrics tylko warunek (bez punktów)
     window.parent.postMessage(
       { type: "LOGIC_FEEDBACK", value: feedbackCondition },
       QUALTRICS_ORIGIN
     );
+
+    __postHeight();
   }, 6000);
 }
+
 /* ===== [PATCH] AUTO-RESIZE do Qualtrics (rodzic) ===== */
-/* UŻYJ TEJ SAMEJ stałej co w Twoim kodzie do LOGIC_FEEDBACK: */
 const __QUALTRICS_ORIGIN__ = (typeof QUALTRICS_ORIGIN === "string")
   ? QUALTRICS_ORIGIN
-  : "https://psychodpt.fra1.qualtrics.com";  // <- zostaw jak jest u Ciebie w projekcie
+  : "https://psychodpt.fra1.qualtrics.com";
 
 function __getDocHeight() {
   const b = document.body;
@@ -201,7 +211,7 @@ function __postHeight() {
   } catch (e) {}
 }
 
-// 1) Odpowiadaj na prośbę rodzica o pomiar wysokości
+// Odpowiedź na prośbę rodzica
 window.addEventListener("message", function (event) {
   if (event.origin !== __QUALTRICS_ORIGIN__) return;
   if (event.data && event.data.type === "PING_HEIGHT") {
@@ -209,25 +219,17 @@ window.addEventListener("message", function (event) {
   }
 });
 
-// 2) Pierwsze pomiary + zmiana rozmiaru okna
+// Pierwsze pomiary + zmiana rozmiaru okna
 document.addEventListener("DOMContentLoaded", __postHeight);
 window.addEventListener("load", __postHeight);
 window.addEventListener("resize", () => setTimeout(__postHeight, 50));
 
-// 3) Obserwuj zmiany w DOM (zmiana ekranów, render pytań, timery, feedbacki itp.)
+// Obserwuj zmiany DOM (przełączanie ekranów, timery itp.)
 const __mo__ = new MutationObserver(() => {
-  // throttling prosty: małe opóźnienie, żeby złapać końcową wysokość po zmianach
   clearTimeout(window.__postHeightTick);
   window.__postHeightTick = setTimeout(__postHeight, 30);
 });
-__mo__.observe(document.documentElement, {
-  childList: true,
-  subtree: true,
-  attributes: true,
-  characterData: false
-});
+__mo__.observe(document.documentElement, { childList: true, subtree: true, attributes: true });
 
-// 4) Dodatkowy trigger co sekundę (timery mogą lekko zmieniać układ)
-setInterval(() => {
-  __postHeight();
-}, 1000);
+// Dodatkowe, lekkie przypomnienie co 1 s (licznik może zmieniać wysokość)
+setInterval(__postHeight, 1000);
