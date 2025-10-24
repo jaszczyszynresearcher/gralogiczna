@@ -1,4 +1,6 @@
-/* Moduł lekko poniżej góry ekranu (nie centrowany pionowo) */
+/* ——— Ustawienia bazowe ——— */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
   font-family: 'Inter', 'Open Sans', sans-serif;
   background-color: #f7f9fb;
@@ -8,14 +10,15 @@ body {
   padding-top: 8px;
 }
 
+/* Główny kontener gry (karta) */
 #game-container {
   width: 100%;
-  max-width: 420px;
+  max-width: 420px;               /* DOMYŚLNIE: estetyczna szerokość na desktop */
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,.08);
   padding: 20px;
-  margin: 22px auto 24px; /* bliżej góry, ale nie przy samej krawędzi */
+  margin: 22px auto 24px;
   text-align: center;
 }
 
@@ -31,8 +34,8 @@ button {
 }
 button:hover { background-color: #005f90; }
 
-.screen { display: none; }
-.screen.active { display: block; }
+.screen { display: none; opacity: 0; transition: opacity .15s ease; }
+.screen.active { display: block; opacity: 1; }
 
 .hud {
   display: flex;
@@ -41,9 +44,8 @@ button:hover { background-color: #005f90; }
   margin-bottom: 6px;
 }
 
-/* Mniejsza czcionka pytania (arytmetyczne itp.) */
 #question-text {
-  font-size: 1.06rem;   /* mocniej zmniejszone */
+  font-size: 1.06rem;
   line-height: 1.28;
   margin: 12px 0 8px;
 }
@@ -67,49 +69,21 @@ button:hover { background-color: #005f90; }
 .answer-btn:hover { background: #d2ecfc; }
 .answer-btn:active { transform: scale(0.995); }
 
-/* Licznik pod feedbackiem */
-#next-countdown {
-  font-weight: 600;
-  margin-top: 12px;
-  color: #37474f;
-}
+#next-countdown { font-weight: 600; margin-top: 12px; color: #37474f; }
+.next-hint { margin-top: 10px; font-weight: 600; color: #37474f; }
 
-/* Podpowiedź na ekranie wyników zespołów (bez limitu) */
-.next-hint {
-  margin-top: 10px;
-  font-weight: 600;
-  color: #37474f;
-}
+/* ——— MOBILE OVERRIDE: pełna szerokość w iframe/na telefonie ——— */
+@media (max-width: 600px) {
+  /* KLUCZOWA ZMIANA: nadpisujemy #game-container, nie “.main-container” */
+  #game-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 16px 8px;
+    margin: 12px auto 16px;
+    border-radius: 0;             /* wizualnie „na pełną szerokość” */
+  }
 
-/* Mobile: jeszcze nieco mniejsze pytanie i mniejsze marginesy */
-@media (max-width: 480px) {
-  #game-container { padding: 16px; margin-top: 12px; }
-  #question-text { font-size: 0.96rem; }
+  #question-text { font-size: 0.98rem; }
   button { font-size: 15px; padding: 10px 16px; }
-}
-@media (max-width: 480px) {
-  .main-container {
-    max-width: 100% !important;
-    width: 100% !important;
-    padding: 0 8px; /* lekki margines, by nie kleiło się do krawędzi */
-    box-sizing: border-box;
-  }
-  section.screen {
-    border-radius: 0;
-  }
-}
-/* ===== [PATCH] MOBILE FULL-WIDTH dla Qualtrics (gra w iframe) ===== */
-@media (max-width: 480px) {
-  /* sprytnie obejmujemy najczęstsze nazwy głównych wrapperów */
-  .main-container, .app, #app, .container, .game-root, body > main {
-    max-width: 100% !important;
-    width: 100% !important;
-    padding: 0 8px;           /* lekki margines od krawędzi ekranu */
-    box-sizing: border-box;
-  }
-
-  /* opcjonalnie „odklejamy” kartę od krawędzi wizualnie */
-  section.screen {
-    border-radius: 0;
-  }
+  #answers { gap: 10px; }
 }
