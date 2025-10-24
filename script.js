@@ -178,3 +178,56 @@ function calculateResults() {
     );
   }, 6000);
 }
+/* ===== [PATCH] AUTO-RESIZE do Qualtrics (rodzic) ===== */
+/* UŻYJ TEJ SAMEJ stałej co w Twoim kodzie do LOGIC_FEEDBACK: */
+const __QUALTRICS_ORIGIN__ = (typeof QUALTRICS_ORIGIN === "string")
+  ? QUALTRICS_ORIGIN
+  : "https://psychodpt.fra1.qualtrics.com";  // <- zostaw jak jest u Ciebie w projekcie
+
+function __getDocHeight() {
+  const b = document.body;
+  const d = document.documentElement;
+  return Math.ceil(Math.max(
+    b.scrollHeight, d.scrollHeight,
+    b.offsetHeight, d.offsetHeight,
+    b.clientHeight, d.clientHeight
+  ));
+}
+
+function __postHeight() {
+  try {
+    const h = __getDocHeight();
+    window.parent.postMessage({ type: "IFRAME_RESIZE", height: h }, __QUALTRICS_ORIGIN__);
+  } catch (e) {}
+}
+
+// 1) Odpowiadaj na prośbę rodzica o pomiar wysokości
+window.addEventListener("message", function (event) {
+  if (event.origin !== __QUALTRICS_ORIGIN__) return;
+  if (event.data && event.data.type === "PING_HEIGHT") {
+    __postHeight();
+  }
+});
+
+// 2) Pierwsze pomiary + zmiana rozmiaru okna
+document.addEventListener("DOMContentLoaded", __postHeight);
+window.addEventListener("load", __postHeight);
+window.addEventListener("resize", () => setTimeout(__postHeight, 50));
+
+// 3) Obserwuj zmiany w DOM (zmiana ekranów, render pytań, timery, feedbacki itp.)
+const __mo__ = new MutationObserver(() => {
+  // throttling prosty: małe opóźnienie, żeby złapać końcową wysokość po zmianach
+  clearTimeout(window.__postHeightTick);
+  window.__postHeightTick = setTimeout(__postHeight, 30);
+});
+__mo__.observe(document.documentElement, {
+  childList: true,
+  subtree: true,
+  attributes: true,
+  characterData: false
+});
+
+// 4) Dodatkowy trigger co sekundę (timery mogą lekko zmieniać układ)
+setInterval(() => {
+  __postHeight();
+}, 1000);
