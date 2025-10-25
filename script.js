@@ -111,7 +111,7 @@ function selectAnswer(index) {
   document.getElementById('screen-feedback').appendChild(countdownText);
 
   function updateCountdown() {
-    countdownText.textContent = `Kolejne zadanie za ${countdown} s...`;
+    countdownText.textContent = `Kolejne zadanie pojawi się automatycznie za ${countdown} s...`;
     __postHeight(); // wysokość feedbacku może się zmieniać (licznik)
     if (countdown > 0) {
       countdown--;
