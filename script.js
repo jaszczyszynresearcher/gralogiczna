@@ -172,8 +172,8 @@ function calculateResults() {
     showScreen('screen-team');
     const teamFeedback =
       feedbackCondition === 'Wygrana'
-        ? 'Gratulacje! Wasz zespół wygrał!'
-        : 'Niestety, tym razem Zespół Przeciwny był lepszy.';
+        ? 'Gratulacje! Wasz zespół był lepszy.'
+        : 'Niestety, Zespół Przeciwny był lepszy.';
     document.getElementById('team-feedback').textContent = teamFeedback;
 
     document.getElementById('team-scores').textContent =
