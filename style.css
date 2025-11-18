@@ -1,9 +1,11 @@
 /* ——— Ustawienia bazowe ——— */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+
 body {
   font-family: 'Inter', 'Open Sans', sans-serif;
-  background-color: #f7f9fb;
+  /* ZMIANA: Tło strony ustawione na białe */
+  background-color: #ffffff;
   color: #333;
   margin: 0;
   min-height: 100vh;
@@ -14,9 +16,12 @@ body {
 #game-container {
   width: 100%;
   max-width: 420px;               /* DOMYŚLNIE: estetyczna szerokość na desktop */
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  /* ZMIANA: Tło białe, brak cienia, brak obramowania */
+  background: #ffffff;
+  border-radius: 0;               /* Usunięto zaokrąglenie (opcjonalne przy białym tle, ale czystsze) */
+  box-shadow: none;               /* Usunięto cień */
+  border: none;
+  
   padding: 20px;
   margin: 22px auto 24px;
   text-align: center;
@@ -81,6 +86,7 @@ button:hover { background-color: #005f90; }
     padding: 16px 8px;
     margin: 12px auto 16px;
     border-radius: 0;             /* wizualnie „na pełną szerokość” */
+    box-shadow: none;             /* Upewnienie się, że cień jest wyłączony też na mobile */
   }
 
   #question-text { font-size: 0.98rem; }
