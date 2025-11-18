@@ -97,7 +97,7 @@ function selectAnswer(index) {
     speedBonusAccum += Math.max(0, timeLeft);
   }
 
-  document.getElementById('feedback-text').textContent = correct ? 'Poprawnie! +10 pkt' : 'Błędnie! 0 pkt';
+  document.getElementById('feedback-text').textContent = correct ? 'Poprawnie +10 pkt' : 'Błędnie 0 pkt';
   document.getElementById('correct-answer').textContent = `Prawidłowa odpowiedź: ${q.answers[q.correct]}. ${q.reason}`;
 
   // --- 5-sekundowe okno czytania + odliczanie ---
@@ -111,7 +111,7 @@ function selectAnswer(index) {
   document.getElementById('screen-feedback').appendChild(countdownText);
 
   function updateCountdown() {
-    countdownText.textContent = `Kolejne zadanie pojawi się automatycznie za ${countdown} s...`;
+    countdownText.textContent = `Kolejny ekran pojawi się automatycznie za ${countdown} s...`;
     __postHeight(); // wysokość feedbacku może się zmieniać (licznik)
     if (countdown > 0) {
       countdown--;
@@ -172,8 +172,8 @@ function calculateResults() {
     showScreen('screen-team');
     const teamFeedback =
       feedbackCondition === 'Wygrana'
-        ? 'Gratulacje! Wasz zespół był lepszy.'
-        : 'Niestety, Zespół Przeciwny był lepszy.';
+        ? 'Gratulacje, Wasz zespół był lepszy.'
+        : 'Niestety, zespół przeciwny był lepszy.';
     document.getElementById('team-feedback').textContent = teamFeedback;
 
     document.getElementById('team-scores').textContent =
